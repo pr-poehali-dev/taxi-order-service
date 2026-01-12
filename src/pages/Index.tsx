@@ -40,7 +40,7 @@ const Index = () => {
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon name="Car" size={28} className="text-accent" />
-            <h1 className="text-2xl font-bold">TaxiPro</h1>
+            <h1 className="text-2xl font-bold">otkachka-pro.ru</h1>
           </div>
           <Avatar>
             <AvatarFallback className="bg-accent text-accent-foreground">ИП</AvatarFallback>
