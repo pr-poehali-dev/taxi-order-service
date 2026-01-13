@@ -13,6 +13,32 @@ const Index = () => {
   const [address, setAddress] = useState('');
   const [selectedTariff, setSelectedTariff] = useState('standard');
   const [volume, setVolume] = useState('5');
+  const [distance, setDistance] = useState('0');
+  const [additionalServices, setAdditionalServices] = useState({
+    washing: false,
+    longHose: false,
+    urgent: false
+  });
+
+  const calculateTotalPrice = () => {
+    const baseTariff = tariffs.find(t => t.id === selectedTariff);
+    if (!baseTariff) return 0;
+
+    let total = baseTariff.price;
+
+    // Доплата за расстояние (50₽/км за пределами города)
+    const distanceNum = parseFloat(distance) || 0;
+    if (distanceNum > 10) {
+      total += (distanceNum - 10) * 50;
+    }
+
+    // Дополнительные услуги
+    if (additionalServices.washing) total += 500;
+    if (additionalServices.longHose) total += 800;
+    if (additionalServices.urgent) total += 1500;
+
+    return total;
+  };
 
   const tariffs = [
     { id: 'standard', name: 'Стандарт 5м³', price: 3500, time: '30-60 мин', icon: 'Truck', volume: '5' },
@@ -51,10 +77,14 @@ const Index = () => {
 
       <main className="container mx-auto p-4 pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="home" className="flex flex-col gap-1">
               <Icon name="Home" size={20} />
               <span className="text-xs">Главная</span>
+            </TabsTrigger>
+            <TabsTrigger value="calculator" className="flex flex-col gap-1">
+              <Icon name="Calculator" size={20} />
+              <span className="text-xs">Калькулятор</span>
             </TabsTrigger>
             <TabsTrigger value="order" className="flex flex-col gap-1">
               <Icon name="ClipboardList" size={20} />
@@ -180,6 +210,162 @@ const Index = () => {
                   <span>Опытные специалисты с лицензией на утилизацию</span>
                 </li>
               </ul>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="calculator" className="space-y-6 animate-fade-in">
+            <Card className="p-6 bg-gradient-to-br from-accent/10 to-accent/5 border-2 border-accent/20">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <Icon name="Calculator" size={28} className="text-accent" />
+                Калькулятор стоимости
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">Рассчитайте точную стоимость услуги</p>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-semibold mb-2 block">Объём машины</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {tariffs.map((tariff) => (
+                      <Button
+                        key={tariff.id}
+                        variant={selectedTariff === tariff.id ? 'default' : 'outline'}
+                        onClick={() => setSelectedTariff(tariff.id)}
+                        className={`flex flex-col h-auto py-3 ${selectedTariff === tariff.id ? 'bg-accent text-accent-foreground' : ''}`}
+                      >
+                        <Icon name={tariff.icon as any} size={20} />
+                        <span className="text-xs mt-1">{tariff.volume}м³</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold mb-2 block flex items-center gap-2">
+                    <Icon name="MapPin" size={16} className="text-accent" />
+                    Расстояние от города (км)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={distance}
+                    onChange={(e) => setDistance(e.target.value)}
+                    placeholder="Введите расстояние"
+                    className="text-lg"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    До 10 км — бесплатно, далее +50₽ за каждый км
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold mb-3 block">Дополнительные услуги</label>
+                  <div className="space-y-3">
+                    <Card className={`p-4 cursor-pointer transition-all hover-scale ${additionalServices.washing ? 'border-2 border-accent bg-accent/5' : ''}`}
+                      onClick={() => setAdditionalServices(prev => ({ ...prev, washing: !prev.washing }))}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <input type="checkbox" checked={additionalServices.washing} readOnly className="w-5 h-5 accent-accent" />
+                          <div>
+                            <p className="font-semibold">Промывка септика</p>
+                            <p className="text-xs text-muted-foreground">Глубокая очистка системы</p>
+                          </div>
+                        </div>
+                        <span className="font-bold text-accent">+500 ₽</span>
+                      </div>
+                    </Card>
+
+                    <Card className={`p-4 cursor-pointer transition-all hover-scale ${additionalServices.longHose ? 'border-2 border-accent bg-accent/5' : ''}`}
+                      onClick={() => setAdditionalServices(prev => ({ ...prev, longHose: !prev.longHose }))}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <input type="checkbox" checked={additionalServices.longHose} readOnly className="w-5 h-5 accent-accent" />
+                          <div>
+                            <p className="font-semibold">Увеличенный шланг 20м</p>
+                            <p className="text-xs text-muted-foreground">Для труднодоступных мест</p>
+                          </div>
+                        </div>
+                        <span className="font-bold text-accent">+800 ₽</span>
+                      </div>
+                    </Card>
+
+                    <Card className={`p-4 cursor-pointer transition-all hover-scale ${additionalServices.urgent ? 'border-2 border-accent bg-accent/5' : ''}`}
+                      onClick={() => setAdditionalServices(prev => ({ ...prev, urgent: !prev.urgent }))}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <input type="checkbox" checked={additionalServices.urgent} readOnly className="w-5 h-5 accent-accent" />
+                          <div>
+                            <p className="font-semibold">Срочный выезд</p>
+                            <p className="text-xs text-muted-foreground">Подача за 15-30 минут</p>
+                          </div>
+                        </div>
+                        <span className="font-bold text-accent">+1500 ₽</span>
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+
+                <Card className="p-6 bg-primary text-primary-foreground">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-lg">Базовый тариф:</span>
+                    <span className="text-xl font-bold">{tariffs.find(t => t.id === selectedTariff)?.price.toLocaleString()} ₽</span>
+                  </div>
+                  
+                  {parseFloat(distance) > 10 && (
+                    <div className="flex items-center justify-between mb-4 text-sm opacity-90">
+                      <span>Доплата за расстояние ({Math.round(parseFloat(distance) - 10)} км):</span>
+                      <span className="font-semibold">+{((parseFloat(distance) - 10) * 50).toLocaleString()} ₽</span>
+                    </div>
+                  )}
+                  
+                  {(additionalServices.washing || additionalServices.longHose || additionalServices.urgent) && (
+                    <div className="border-t border-primary-foreground/20 pt-3 mb-4 space-y-2 text-sm opacity-90">
+                      {additionalServices.washing && (
+                        <div className="flex items-center justify-between">
+                          <span>Промывка:</span>
+                          <span className="font-semibold">+500 ₽</span>
+                        </div>
+                      )}
+                      {additionalServices.longHose && (
+                        <div className="flex items-center justify-between">
+                          <span>Длинный шланг:</span>
+                          <span className="font-semibold">+800 ₽</span>
+                        </div>
+                      )}
+                      {additionalServices.urgent && (
+                        <div className="flex items-center justify-between">
+                          <span>Срочный выезд:</span>
+                          <span className="font-semibold">+1500 ₽</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="border-t border-primary-foreground/20 pt-4 flex items-center justify-between">
+                    <span className="text-2xl font-bold">Итого:</span>
+                    <span className="text-3xl font-bold text-accent">{calculateTotalPrice().toLocaleString()} ₽</span>
+                  </div>
+                </Card>
+
+                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-6 text-lg">
+                  <Icon name="Phone" size={20} className="mr-2" />
+                  Заказать за {calculateTotalPrice().toLocaleString()} ₽
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-muted">
+              <div className="flex items-start gap-3">
+                <Icon name="Info" size={20} className="text-accent mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-semibold mb-1">Как рассчитывается стоимость?</p>
+                  <ul className="text-muted-foreground space-y-1">
+                    <li>• Базовая цена зависит от объёма машины</li>
+                    <li>• Выезд в пределах 10 км от Иркутска — бесплатно</li>
+                    <li>• За каждый километр свыше 10 км — доплата 50₽</li>
+                    <li>• Дополнительные услуги оплачиваются отдельно</li>
+                  </ul>
+                </div>
+              </div>
             </Card>
           </TabsContent>
 
